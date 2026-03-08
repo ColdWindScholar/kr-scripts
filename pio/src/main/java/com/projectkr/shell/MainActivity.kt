@@ -19,7 +19,6 @@ import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -74,7 +73,7 @@ class MainActivity : ComponentActivity() {
         }
 
         progressBarDialog.showDialog(getString(R.string.please_wait))
-        Thread(Runnable {
+        Thread {
             val page2Config = krScriptConfig.pageListConfig
             val favoritesConfig = krScriptConfig.favoriteConfig
 
@@ -85,19 +84,27 @@ class MainActivity : ComponentActivity() {
 
                 if (favorites != null && favorites.size > 0) {
                     updateFavoritesTab(favorites, favoritesConfig)
-                    tabIconHelper.newTabSpec(getString(R.string.tab_favorites), ContextCompat.getDrawable(this, R.drawable.tab_favorites)!!, R.id.main_tabhost_2)
+                    tabIconHelper.newTabSpec(
+                        getString(R.string.tab_favorites),
+                        ContextCompat.getDrawable(this, R.drawable.tab_favorites)!!,
+                        R.id.main_tabhost_2
+                    )
                 } else {
                     binding.mainTabhost2.visibility = View.GONE
                 }
 
                 if (pages != null && pages.size > 0) {
                     updateMoreTab(pages, page2Config)
-                    tabIconHelper.newTabSpec(getString(R.string.tab_pages), ContextCompat.getDrawable(this, R.drawable.tab_pages)!!, R.id.main_tabhost_3)
+                    tabIconHelper.newTabSpec(
+                        getString(R.string.tab_pages),
+                        ContextCompat.getDrawable(this, R.drawable.tab_pages)!!,
+                        R.id.main_tabhost_3
+                    )
                 } else {
                     binding.mainTabhost3.visibility = View.GONE
                 }
             }
-        }).start()
+        }.start()
 
         if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
             val home = FragmentHome()
@@ -136,7 +143,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun reloadFavoritesTab() {
-        Thread(Runnable {
+        Thread {
             val favoritesConfig = krScriptConfig.favoriteConfig
             val favorites = getItems(favoritesConfig)
             favorites?.run {
@@ -144,11 +151,11 @@ class MainActivity : ComponentActivity() {
                     updateFavoritesTab(this, favoritesConfig)
                 }
             }
-        }).start()
+        }.start()
     }
 
     private fun reloadMoreTab() {
-        Thread(Runnable {
+        Thread {
             val page2Config = krScriptConfig.pageListConfig
             val pages = getItems(page2Config)
 
@@ -157,7 +164,7 @@ class MainActivity : ComponentActivity() {
                     updateMoreTab(this, page2Config)
                 }
             }
-        }).start()
+        }.start()
     }
 
     private fun getKrScriptActionHandler(pageNode: PageNode, isFavoritesTab: Boolean): KrScriptActionHandler {
@@ -176,13 +183,12 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun addToFavorites(clickableNode: ClickableNode, addToFavoritesHandler: KrScriptActionHandler.AddToFavoritesHandler) {
-                val page = if (clickableNode is PageNode) {
-                    clickableNode
-                } else if (clickableNode is RunnableNode) {
-                    pageNode
-                } else {
-                    return
-                }
+                val page = clickableNode as? PageNode
+                    ?: if (clickableNode is RunnableNode) {
+                        pageNode
+                    } else {
+                        return
+                    }
 
                 val intent = Intent()
 
