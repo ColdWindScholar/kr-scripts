@@ -7,6 +7,8 @@ import android.widget.*
 import com.omarea.common.R
 import com.omarea.common.model.SelectItem
 import java.util.*
+import java.util.Locale
+import java.util.Locale.getDefault
 
 class AdapterItemChooser2(
         private val context: Context,
@@ -43,7 +45,7 @@ class AdapterItemChooser2(
                 results.values = list
                 results.count = list.size
             } else {
-                val prefixString = prefix.toLowerCase()
+                val prefixString = prefix.lowercase(getDefault())
 
                 val values: ArrayList<SelectItem>
                 synchronized(adapter.mLock) {
@@ -56,7 +58,9 @@ class AdapterItemChooser2(
 
                 for (i in 0 until count) {
                     val value = values[i]
-                    val valueText = if (value.title == null) "" else value.title!!.toLowerCase()
+                    val valueText = if (value.title == null) "" else value.title!!.lowercase(
+                        getDefault()
+                    )
                     if (selected.contains(value)) {
                         newValues.add(value)
                     } else {
