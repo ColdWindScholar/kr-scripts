@@ -1,6 +1,7 @@
 package com.projectkr.shell
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
@@ -19,14 +20,20 @@ import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
+import androidx.fragment.app.FragmentActivity
 import com.omarea.common.shared.FilePathResolver
 import com.omarea.common.ui.DialogHelper
 import com.omarea.common.ui.ProgressBarDialog
@@ -49,7 +56,9 @@ import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Favorites
 import top.yukonga.miuix.kmp.icon.extended.MapAlbum
 import top.yukonga.miuix.kmp.icon.extended.More
-
+enum class MainTab {
+    Home, Favourites, Pages
+}
 class MainActivity : ComponentActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
     private var handler = Handler()
@@ -58,11 +67,13 @@ class MainActivity : ComponentActivity() {
 
     private fun checkPermission(permission: String): Boolean = PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
 
+    @SuppressLint("ContextCastToActivity")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeModeState.switchTheme(this)
         krScriptConfig = KrScriptConfig()
+
         setContent {
             progressBarDialog.showDialog(getString(R.string.please_wait))
             val page2Config = krScriptConfig.pageListConfig
@@ -71,13 +82,6 @@ class MainActivity : ComponentActivity() {
             val favorites = getItems(favoritesConfig)
             handler.post {
                 progressBarDialog.hideDialog()
-                if (favorites != null && favorites.size > 0) {
-                    updateFavoritesTab(favorites, favoritesConfig)
-                }
-
-                if (pages != null && pages.size > 0) {
-                    updateMoreTab(pages, page2Config)
-                }
             }
             val items = listOf(
                 if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) NavigationItem(
@@ -122,18 +126,40 @@ class MainActivity : ComponentActivity() {
                         })
                 }
             ) {
+                val fragmentManager = (LocalContext.current as FragmentActivity).supportFragmentManager
+                Box(modifier = Modifier.fillMaxSize()) {
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        userScrollEnabled = true,
+                        beyondViewportPageCount = 1,
+                        key = { MainTab.entries[it].name }
+                    ) { page ->
+                        when (MainTab.entries[page]) {
+                            MainTab.Home -> {
+                                if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
+                                    val home = FragmentHome()
+                                    val fragmentManager = fragmentManager
+                                    val transaction = fragmentManager.beginTransaction()
+                                    transaction.replace(R.id.main_tabhost_cpu, home)
+                                    transaction.commitAllowingStateLoss()
+                                }
+                            }
 
+                            MainTab.Favourites -> {
+                                val favoritesFragment = ActionListFragment.create(favorites, getKrScriptActionHandler(favoritesConfig, true), null, ThemeModeState.getThemeMode())
+                                fragmentManager.beginTransaction().replace(R.id.list_favorites, favoritesFragment).commitAllowingStateLoss()
+                            }
+
+                            MainTab.Pages -> {
+                                val allItemFragment = ActionListFragment.create(pages, getKrScriptActionHandler(page2Config, false), null, ThemeModeState.getThemeMode())
+                                fragmentManager.beginTransaction().replace(R.id.list_pages, allItemFragment).commitAllowingStateLoss()
+                            }
+                        }
+                    }
+                }
             }
         }
-
-        if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
-            val home = FragmentHome()
-            val fragmentManager = supportFragmentManager
-            val transaction = fragmentManager.beginTransaction()
-            transaction.replace(R.id.main_tabhost_cpu, home)
-            transaction.commitAllowingStateLoss()
-        }
-
     }
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
@@ -147,16 +173,6 @@ class MainActivity : ComponentActivity() {
         }
 
         return items
-    }
-
-    private fun updateFavoritesTab(items: ArrayList<NodeInfoBase>, pageNode: PageNode) {
-        val favoritesFragment = ActionListFragment.create(items, getKrScriptActionHandler(pageNode, true), null, ThemeModeState.getThemeMode())
-        supportFragmentManager.beginTransaction().replace(R.id.list_favorites, favoritesFragment).commitAllowingStateLoss()
-    }
-
-    private fun updateMoreTab(items: ArrayList<NodeInfoBase>, pageNode: PageNode) {
-        val allItemFragment = ActionListFragment.create(items, getKrScriptActionHandler(pageNode, false), null, ThemeModeState.getThemeMode())
-        supportFragmentManager.beginTransaction().replace(R.id.list_pages, allItemFragment).commitAllowingStateLoss()
     }
 
     private fun reloadFavoritesTab() {
