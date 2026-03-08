@@ -1,11 +1,10 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 28
     buildToolsVersion '28.0.3'
-
+    namespace "com.projectkr.shell"
     defaultConfig {
         resConfigs "zh"
         minSdkVersion 21
