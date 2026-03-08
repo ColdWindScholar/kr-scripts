@@ -31,10 +31,11 @@ import com.omarea.krscript.ui.ActionListFragment
 import com.omarea.krscript.ui.DialogLogFragment
 import com.omarea.krscript.ui.ParamsFileChooserRender
 import com.omarea.krscript.ui.PageMenuLoader
-import kotlinx.android.synthetic.main.activity_action_page.*
+import com.projectkr.shell.databinding.ActivityActionPageBinding
 
 
 class ActionPage : AppCompatActivity() {
+    private lateinit var binding: ActivityActionPageBinding
     private val progressBarDialog = ProgressBarDialog(this)
     private var actionsLoaded = false
     private var handler = Handler()
