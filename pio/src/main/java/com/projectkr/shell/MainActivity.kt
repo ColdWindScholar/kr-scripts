@@ -147,7 +147,6 @@ class MainActivity : ComponentActivity() {
                             }
 
                             MainTab.Favourites -> {
-
                                 val favoritesConfig = krScriptConfig.favoriteConfig
                                 val favorites = getItems(favoritesConfig)
                                 val favoritesFragment = ActionListFragment.create(favorites, getKrScriptActionHandler(favoritesConfig, true), null, ThemeModeState.getThemeMode())
@@ -187,6 +186,7 @@ class MainActivity : ComponentActivity() {
                     finishAndRemoveTask()
                 } else if (runnableNode.reloadPage) {
                     // TODO:多线程优化
+                    //todo : reload of not
                 }
             }
 
