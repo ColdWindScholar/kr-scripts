@@ -1,10 +1,8 @@
 package com.projectkr.shell
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -14,28 +12,130 @@ import androidx.core.content.PermissionChecker
 import android.util.TypedValue
 import android.view.View
 import android.widget.TextView
+import androidx.activity.ComponentActivity
 import com.omarea.common.shell.ShellExecutor
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.permissions.CheckRootStatus
-import kotlinx.android.synthetic.main.activity_splash.*
 import java.io.BufferedReader
 import java.io.DataOutputStream
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
-class SplashActivity : Activity() {
+
+class SplashActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (ScriptEnvironmen.isInited()) {
-            if (isTaskRoot) {
-                gotoHome()
+        setContent {
+            val context = LocalContext.current
+            val showStartLog = remember { mutableStateOf(false) }
+            val startStateText = remember { mutableStateOf(getString(R.string.pop_before_start)) }
+            LaunchedEffect(Unit) {
+                if (ScriptEnvironmen.isInited()) {
+                    if (isTaskRoot) {
+                        gotoHome()
+                    }
+                    return@LaunchedEffect
+                }
+
+                updateThemeStyle()
+
+                showStartLog.value = true
+                checkRoot {
+                    startStateText.value = getString(R.string.pio_permission_checking)
+                    hasRoot = true
+                    startStateText.value = getString(R.string.pop_started)
+
+                    val config = KrScriptConfig().init(context)
+                    if (config.beforeStartSh.isNotEmpty()) {
+                        BeforeStartThread(context, config, UpdateLogViewHandler(start_state_text) {
+                            gotoHome()
+                        }).start()
+                    } else {
+                        gotoHome()
+                    }
+                }
             }
-            return
+            // 对应 FrameLayout
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = colorResource(id = R.color.splash_bg_color)
+                    )
+                    .padding(WindowInsets.systemBars.asPaddingValues()) // 模拟 clipToPadding 和 fitsSystemWindows 的处理
+            ) {
+                // 对应 LinearLayout
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .align(Alignment.Center), // layout_gravity="center"
+                    horizontalAlignment = Alignment.CenterHorizontally, // gravity="center"
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // 对应 ImageView
+                    if (showStartLog.value){
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_settings),
+                        contentDescription = null,
+                        modifier = Modifier.size(200.dp)
+                    )}
+
+                    // 对应第一个 TextView (fullscreen_content)
+                    Text(
+                        text = stringResource(id = R.string.pio_starting),
+                        fontSize = 35.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0x44FFFFFF),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(top = 50.dp)
+                    )
+                    // 对应第二个 TextView (start_state_text)
+                    Text(
+                        text = startStateText.value,
+                        fontSize = 13.sp,
+                        color = Color(0xAAFFFFFF),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, top = 15.dp, end = 20.dp, bottom = 40.dp),
+                        minLines = 8
+                    )
+                }
+            }
         }
 
-        setContentView(R.layout.activity_splash)
-        updateThemeStyle()
-
-        checkPermissions()
     }
 
     /**
@@ -56,33 +156,19 @@ class SplashActivity : Activity() {
             val option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             decorView.setSystemUiVisibility(option);
             //设置状态栏颜色为透明
-            getWindow().setStatusBarColor(Color.TRANSPARENT)
+            window.setStatusBarColor(0x00000000)
         }
     }
 
     private fun getColorAccent(): Int {
         val typedValue = TypedValue()
-        this.theme.resolveAttribute(R.attr.colorAccent, typedValue, true)
+        this.theme.resolveAttribute(androidx.appcompat.R.attr.colorAccent, typedValue, true)
         return typedValue.data
     }
 
     /**
      * 开始检查必需权限
      */
-    private fun checkPermissions() {
-        start_logo.visibility = View.VISIBLE
-        checkRoot(Runnable {
-            start_state_text.text = getString(R.string.pio_permission_checking)
-            hasRoot = true
-
-            /*
-            checkFileWrite(Runnable {
-                startToFinish()
-            })
-            */
-            startToFinish()
-        })
-    }
 
     private fun checkPermission(permission: String): Boolean = PermissionChecker.checkSelfPermission(this.applicationContext, permission) == PermissionChecker.PERMISSION_GRANTED
 
@@ -135,16 +221,7 @@ class SplashActivity : Activity() {
      * 启动完成
      */
     private fun startToFinish() {
-        start_state_text.text = getString(R.string.pop_started)
 
-        val config = KrScriptConfig().init(this)
-        if (config.beforeStartSh.isNotEmpty()) {
-            BeforeStartThread(this, config, UpdateLogViewHandler(start_state_text, Runnable {
-                gotoHome()
-            })).start()
-        } else {
-            gotoHome()
-        }
     }
 
     private fun gotoHome() {

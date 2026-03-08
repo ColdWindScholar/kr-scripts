@@ -51,6 +51,8 @@ dependencies {
     androidTestImplementation composeBom
 
     // Choose one of the following:
+    implementation 'androidx.activity:activity-compose:1.12.4'
+
     // Material Design 3
     implementation 'androidx.compose.material3:material3'
     // or skip Material Design and build directly on top of foundational components
