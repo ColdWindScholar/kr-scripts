@@ -180,9 +180,6 @@ class MainActivity : ComponentActivity() {
         return items
     }
 
-
-
-
     private fun getKrScriptActionHandler(pageNode: PageNode, isFavoritesTab: Boolean): KrScriptActionHandler {
         return object : KrScriptActionHandler {
             override fun onActionCompleted(runnableNode: RunnableNode) {
