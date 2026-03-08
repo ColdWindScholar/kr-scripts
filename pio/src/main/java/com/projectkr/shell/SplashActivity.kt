@@ -48,6 +48,7 @@ import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.permissions.CheckRootStatus
 import java.io.BufferedReader
 import java.io.DataOutputStream
+import java.util.HashMap
 
 
 class SplashActivity : ComponentActivity() {
@@ -142,21 +143,21 @@ class SplashActivity : ComponentActivity() {
      * 界面主题样式调整
      */
     private fun updateThemeStyle() {
-        getWindow().setNavigationBarColor(getColorAccent())
+        window.navigationBarColor = getColorAccent()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            window.setNavigationBarColor(getColor(R.color.splash_bg_color))
+            window.navigationBarColor = getColor(R.color.splash_bg_color)
         } else {
-            window.setNavigationBarColor(resources.getColor(R.color.splash_bg_color))
+            window.navigationBarColor = resources.getColor(R.color.splash_bg_color)
         }
 
         //  得到当前界面的装饰视图
         if (Build.VERSION.SDK_INT >= 21) {
-            val decorView = window.getDecorView();
+            val decorView = window.decorView
             //让应用主题内容占用系统状态栏的空间,注意:下面两个参数必须一起使用 stable 牢固的
             val option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            decorView.setSystemUiVisibility(option);
+            decorView.systemUiVisibility = option
             //设置状态栏颜色为透明
-            window.setStatusBarColor(0x00000000)
+            window.statusBarColor = 0x00000000
         }
     }
 
@@ -176,38 +177,41 @@ class SplashActivity : ComponentActivity() {
      * 检查权限 主要是文件读写权限
      */
     private fun checkFileWrite(next: Runnable) {
-        Thread(Runnable {
+        Thread {
             CheckRootStatus.grantPermission(this)
-            if (!(checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
+            if (!(checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ))
+            ) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     ActivityCompat.requestPermissions(
-                            this@SplashActivity,
-                            arrayOf(
-                                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                    Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-                                    Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                    Manifest.permission.WAKE_LOCK
-                            ),
-                            0x11
+                        this@SplashActivity,
+                        arrayOf(
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
+                            Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                            Manifest.permission.WAKE_LOCK
+                        ),
+                        0x11
                     )
                 } else {
                     ActivityCompat.requestPermissions(
-                            this@SplashActivity,
-                            arrayOf(
-                                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                    Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-                                    Manifest.permission.WAKE_LOCK
-                            ),
-                            0x11
+                        this@SplashActivity,
+                        arrayOf(
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
+                            Manifest.permission.WAKE_LOCK
+                        ),
+                        0x11
                     )
                 }
             }
             myHandler.post {
                 next.run()
             }
-        }).start()
+        }.start()
     }
 
     private var hasRoot = false
@@ -258,7 +262,7 @@ class SplashActivity : ComponentActivity() {
     }
 
     private class BeforeStartThread(private var context: Context, private val config: KrScriptConfig, private var updateLogViewHandler: UpdateLogViewHandler) : Thread() {
-        val params = config.getVariables();
+        val params: HashMap<String?, String?>? = config.variables
 
         override fun run() {
             try {
@@ -284,7 +288,7 @@ class SplashActivity : ComponentActivity() {
 
     private class StreamReadThread(private var reader: BufferedReader, private var updateLogViewHandler: UpdateLogViewHandler) : Thread() {
         override fun run() {
-            var line: String? = ""
+            var line: String?
             while (true) {
                 line = reader.readLine()
                 if (line == null) {
