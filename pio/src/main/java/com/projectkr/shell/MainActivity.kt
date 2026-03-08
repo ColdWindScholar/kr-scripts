@@ -17,6 +17,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.CompoundButton
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.FragmentActivity
@@ -136,31 +138,43 @@ class MainActivity : AppCompatActivity() {
                         beyondViewportPageCount = 1,
                         key = { MainTab.entries[it].name }
                     ) { page ->
-                        when (MainTab.entries[page]) {
-                            MainTab.Home -> {
-                                if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
-                                    val home = FragmentHome()
-                                    val fragmentManager = fragmentManager
-                                    val transaction = fragmentManager.beginTransaction()
-                                    transaction.replace(R.id.main_tabhost_cpu, home)
-                                    transaction.commitAllowingStateLoss()
+                        AndroidView(
+                            modifier = Modifier.fillMaxSize(),
+                            factory = { context ->
+                                // 1. 手动创建一个 FrameLayout 作为容器
+                                FrameLayout(context).apply {
+                                    // 2. 必须设置一个 ID，且该 ID 需与 Transaction 中的 ID 一致
+                                    id = View.generateViewId()
+                                    val containerId = id
+                                    when (MainTab.entries[page]) {
+                                        MainTab.Home -> {
+                                            if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
+                                                val home = FragmentHome()
+                                                val fragmentManager = fragmentManager
+                                                val transaction = fragmentManager.beginTransaction()
+                                                transaction.replace(containerId, home)
+                                                transaction.commitAllowingStateLoss()
+                                            }
+                                        }
+
+                                        MainTab.Favourites -> {
+                                            val favoritesConfig = krScriptConfig.favoriteConfig
+                                            favorites = getItems(favoritesConfig)
+                                            val favoritesFragment = ActionListFragment.create(favorites, getKrScriptActionHandler(favoritesConfig, true), null, ThemeModeState.getThemeMode())
+                                            fragmentManager.beginTransaction().replace(containerId, favoritesFragment).commitAllowingStateLoss()
+                                        }
+
+                                        MainTab.Pages -> {
+                                            val page2Config = krScriptConfig.pageListConfig
+                                            pages = getItems(page2Config)
+                                            val allItemFragment = ActionListFragment.create(pages, getKrScriptActionHandler(page2Config, false), null, ThemeModeState.getThemeMode())
+                                            fragmentManager.beginTransaction().replace(containerId, allItemFragment).commitAllowingStateLoss()
+                                        }
+                                    }
                                 }
                             }
+                        )
 
-                            MainTab.Favourites -> {
-                                val favoritesConfig = krScriptConfig.favoriteConfig
-                                favorites = getItems(favoritesConfig)
-                                val favoritesFragment = ActionListFragment.create(favorites, getKrScriptActionHandler(favoritesConfig, true), null, ThemeModeState.getThemeMode())
-                                fragmentManager.beginTransaction().replace(R.id.list_favorites, favoritesFragment).commitAllowingStateLoss()
-                            }
-
-                            MainTab.Pages -> {
-                                val page2Config = krScriptConfig.pageListConfig
-                                pages = getItems(page2Config)
-                                val allItemFragment = ActionListFragment.create(pages, getKrScriptActionHandler(page2Config, false), null, ThemeModeState.getThemeMode())
-                                fragmentManager.beginTransaction().replace(R.id.list_pages, allItemFragment).commitAllowingStateLoss()
-                            }
-                        }
                     }
                 }
             }
