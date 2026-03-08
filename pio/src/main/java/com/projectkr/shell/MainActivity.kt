@@ -78,8 +78,8 @@ class MainActivity : ComponentActivity() {
             progressBarDialog.showDialog(getString(R.string.please_wait))
             val page2Config = krScriptConfig.pageListConfig
             val favoritesConfig = krScriptConfig.favoriteConfig
-            val pages = getItems(page2Config)
-            val favorites = getItems(favoritesConfig)
+            var pages = getItems(page2Config)
+            var favorites = getItems(favoritesConfig)
             handler.post {
                 progressBarDialog.hideDialog()
             }
@@ -148,14 +148,14 @@ class MainActivity : ComponentActivity() {
 
                             MainTab.Favourites -> {
                                 val favoritesConfig = krScriptConfig.favoriteConfig
-                                val favorites = getItems(favoritesConfig)
+                                favorites = getItems(favoritesConfig)
                                 val favoritesFragment = ActionListFragment.create(favorites, getKrScriptActionHandler(favoritesConfig, true), null, ThemeModeState.getThemeMode())
                                 fragmentManager.beginTransaction().replace(R.id.list_favorites, favoritesFragment).commitAllowingStateLoss()
                             }
 
                             MainTab.Pages -> {
                                 val page2Config = krScriptConfig.pageListConfig
-                                val pages = getItems(page2Config)
+                                pages = getItems(page2Config)
                                 val allItemFragment = ActionListFragment.create(pages, getKrScriptActionHandler(page2Config, false), null, ThemeModeState.getThemeMode())
                                 fragmentManager.beginTransaction().replace(R.id.list_pages, allItemFragment).commitAllowingStateLoss()
                             }
