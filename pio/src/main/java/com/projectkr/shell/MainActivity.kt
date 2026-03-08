@@ -20,6 +20,7 @@ import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -59,7 +60,7 @@ import top.yukonga.miuix.kmp.icon.extended.More
 enum class MainTab {
     Home, Favourites, Pages
 }
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
     private var handler = Handler()
     private var krScriptConfig = KrScriptConfig()
