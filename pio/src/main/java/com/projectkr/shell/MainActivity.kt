@@ -147,11 +147,16 @@ class MainActivity : ComponentActivity() {
                             }
 
                             MainTab.Favourites -> {
+
+                                val favoritesConfig = krScriptConfig.favoriteConfig
+                                val favorites = getItems(favoritesConfig)
                                 val favoritesFragment = ActionListFragment.create(favorites, getKrScriptActionHandler(favoritesConfig, true), null, ThemeModeState.getThemeMode())
                                 fragmentManager.beginTransaction().replace(R.id.list_favorites, favoritesFragment).commitAllowingStateLoss()
                             }
 
                             MainTab.Pages -> {
+                                val page2Config = krScriptConfig.pageListConfig
+                                val pages = getItems(page2Config)
                                 val allItemFragment = ActionListFragment.create(pages, getKrScriptActionHandler(page2Config, false), null, ThemeModeState.getThemeMode())
                                 fragmentManager.beginTransaction().replace(R.id.list_pages, allItemFragment).commitAllowingStateLoss()
                             }
@@ -175,30 +180,8 @@ class MainActivity : ComponentActivity() {
         return items
     }
 
-    private fun reloadFavoritesTab() {
-        Thread {
-            val favoritesConfig = krScriptConfig.favoriteConfig
-            val favorites = getItems(favoritesConfig)
-            favorites?.run {
-                handler.post {
-                    updateFavoritesTab(this, favoritesConfig)
-                }
-            }
-        }.start()
-    }
 
-    private fun reloadMoreTab() {
-        Thread {
-            val page2Config = krScriptConfig.pageListConfig
-            val pages = getItems(page2Config)
 
-            pages?.run {
-                handler.post {
-                    updateMoreTab(this, page2Config)
-                }
-            }
-        }.start()
-    }
 
     private fun getKrScriptActionHandler(pageNode: PageNode, isFavoritesTab: Boolean): KrScriptActionHandler {
         return object : KrScriptActionHandler {
@@ -207,11 +190,6 @@ class MainActivity : ComponentActivity() {
                     finishAndRemoveTask()
                 } else if (runnableNode.reloadPage) {
                     // TODO:多线程优化
-                    if (isFavoritesTab) {
-                        reloadFavoritesTab()
-                    } else {
-                        reloadMoreTab()
-                    }
                 }
             }
 
