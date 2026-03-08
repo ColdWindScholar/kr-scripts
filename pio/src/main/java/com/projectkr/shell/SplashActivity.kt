@@ -7,17 +7,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.core.app.ActivityCompat
-import androidx.core.content.PermissionChecker
 import android.util.TypedValue
 import android.view.View
-import android.widget.TextView
 import androidx.activity.ComponentActivity
-import com.omarea.common.shell.ShellExecutor
-import com.omarea.krscript.executor.ScriptEnvironmen
-import com.projectkr.shell.permissions.CheckRootStatus
-import java.io.BufferedReader
-import java.io.DataOutputStream
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -49,6 +41,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.PermissionChecker
+import com.omarea.common.shell.ShellExecutor
+import com.omarea.krscript.executor.ScriptEnvironmen
+import com.projectkr.shell.permissions.CheckRootStatus
+import java.io.BufferedReader
+import java.io.DataOutputStream
 
 
 class SplashActivity : ComponentActivity() {
