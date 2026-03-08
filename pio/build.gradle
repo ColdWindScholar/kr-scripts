@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 36
-    buildToolsVersion '28.0.3'
+    buildToolsVersion '35.0.0'
     namespace "com.projectkr.shell"
     defaultConfig {
         resConfigs "zh"
