@@ -19,10 +19,13 @@ import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.omarea.common.shared.FilePathResolver
 import com.omarea.common.ui.DialogHelper
@@ -35,13 +38,17 @@ import com.omarea.krscript.ui.ParamsFileChooserRender
 import com.omarea.vtools.FloatMonitor
 import com.projectkr.shell.databinding.ActivityMainBinding
 import com.projectkr.shell.permissions.CheckRootStatus
-import com.projectkr.shell.ui.TabIconHelper
+import kotlinx.coroutines.launch
+import top.yukonga.miuix.kmp.basic.NavigationBar
+import top.yukonga.miuix.kmp.basic.NavigationBarItem
+import top.yukonga.miuix.kmp.basic.NavigationDisplayMode
 import top.yukonga.miuix.kmp.basic.NavigationItem
 import top.yukonga.miuix.kmp.basic.Scaffold
-import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Favorites
 import top.yukonga.miuix.kmp.icon.extended.MapAlbum
+import top.yukonga.miuix.kmp.icon.extended.More
 
 class MainActivity : ComponentActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
@@ -55,72 +62,69 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeModeState.switchTheme(this)
+        krScriptConfig = KrScriptConfig()
         setContent {
+            progressBarDialog.showDialog(getString(R.string.please_wait))
+            val page2Config = krScriptConfig.pageListConfig
+            val favoritesConfig = krScriptConfig.favoriteConfig
+            val pages = getItems(page2Config)
+            val favorites = getItems(favoritesConfig)
+            handler.post {
+                progressBarDialog.hideDialog()
+                if (favorites != null && favorites.size > 0) {
+                    updateFavoritesTab(favorites, favoritesConfig)
+                }
+
+                if (pages != null && pages.size > 0) {
+                    updateMoreTab(pages, page2Config)
+                }
+            }
+            val items = listOf(
+                if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) NavigationItem(
+                    label = getString(R.string.tab_home),
+                    icon = MiuixIcons.MapAlbum) else null,
+                if (favorites != null && favorites.size > 0) NavigationItem(label = getString(R.string.tab_favorites), icon = MiuixIcons.Favorites) else null,
+                if (pages != null && pages.size > 0) NavigationItem(label = getString(R.string.tab_pages), icon = MiuixIcons.More) else null
+            )
+            val pagerState = rememberPagerState(
+                initialPage = 0,
+                pageCount = { items.filter { (it != null) }.size }
+            )
+            val coroutineScope = rememberCoroutineScope()
+
+            // 同步 pager 状态到当前页面索引
+            val currentPage by remember { derivedStateOf { pagerState.currentPage } }
+            if (!(checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111);
+            }
             Scaffold(
                 topBar = {
                     TopAppBar(
                         title = getString(R.string.app_name))
                 },
                 bottomBar = {
-                    val items = listOf(
-                        NavigationItem(
-                            label = getString(R.string.tab_home),
-                            icon = MiuixIcons.MapAlbum
-                        ),
-                        NavigationItem(label = stringResource(Res.string.tab_about), icon = Icons.Rounded.Info)
-                    )
+                    NavigationBar(
+                        mode = NavigationDisplayMode.IconAndText,
+                        content = {
+                            items.forEachIndexed { index, item ->
+                                if (item != null) {
+                                NavigationBarItem(
+                                    icon = item.icon,
+                                    label = item.label,
+                                    selected = currentPage == index,
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    }
+                                )}
+                            }
+                        })
                 }
             ) {
 
             }
         }
-
-        krScriptConfig = KrScriptConfig()
-
-        binding.mainTabhost.setup()
-        val tabIconHelper = TabIconHelper(binding.mainTabhost, this)
-        if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
-            tabIconHelper.newTabSpec(getString(R.string.tab_home), getDrawable(R.drawable.tab_home)!!, R.id.main_tabhost_cpu)
-        } else {
-            binding.mainTabhostCpu.visibility = View.GONE
-        }
-        binding.mainTabhost.setOnTabChangedListener {
-            tabIconHelper.updateHighlight()
-        }
-
-        progressBarDialog.showDialog(getString(R.string.please_wait))
-        Thread {
-            val page2Config = krScriptConfig.pageListConfig
-            val favoritesConfig = krScriptConfig.favoriteConfig
-
-            val pages = getItems(page2Config)
-            val favorites = getItems(favoritesConfig)
-            handler.post {
-                progressBarDialog.hideDialog()
-
-                if (favorites != null && favorites.size > 0) {
-                    updateFavoritesTab(favorites, favoritesConfig)
-                    tabIconHelper.newTabSpec(
-                        getString(R.string.tab_favorites),
-                        ContextCompat.getDrawable(this, R.drawable.tab_favorites)!!,
-                        R.id.main_tabhost_2
-                    )
-                } else {
-                    binding.mainTabhost2.visibility = View.GONE
-                }
-
-                if (pages != null && pages.size > 0) {
-                    updateMoreTab(pages, page2Config)
-                    tabIconHelper.newTabSpec(
-                        getString(R.string.tab_pages),
-                        ContextCompat.getDrawable(this, R.drawable.tab_pages)!!,
-                        R.id.main_tabhost_3
-                    )
-                } else {
-                    binding.mainTabhost3.visibility = View.GONE
-                }
-            }
-        }.start()
 
         if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
             val home = FragmentHome()
@@ -130,9 +134,6 @@ class MainActivity : ComponentActivity() {
             transaction.commitAllowingStateLoss()
         }
 
-        if (!(checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111);
-        }
     }
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
