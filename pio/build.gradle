@@ -12,6 +12,13 @@ android {
         versionCode 202111141
         versionName "4.0.5"
     }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = "21"
+    }
     buildTypes {
         release {
             minifyEnabled false
