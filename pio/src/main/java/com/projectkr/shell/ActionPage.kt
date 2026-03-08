@@ -32,8 +32,7 @@ import com.omarea.krscript.ui.DialogLogFragment
 import com.omarea.krscript.ui.ParamsFileChooserRender
 import com.omarea.krscript.ui.PageMenuLoader
 import com.projectkr.shell.databinding.ActivityActionPageBinding
-
-
+import com.omarea.krscript.R
 class ActionPage : AppCompatActivity() {
     private lateinit var binding: ActivityActionPageBinding
     private val progressBarDialog = ProgressBarDialog(this)
@@ -60,10 +59,10 @@ class ActionPage : AppCompatActivity() {
 
         ThemeModeState.switchTheme(this)
 
-        setContentView(R.layout.activity_action_page)
-        val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
+        setContentView(com.projectkr.shell.R.layout.activity_action_page)
+        val toolbar = findViewById<View>(com.projectkr.shell.R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
-        setTitle(R.string.app_name)
+        setTitle(com.projectkr.shell.R.string.app_name)
 
         // 显示返回按钮
         supportActionBar!!.setHomeButtonEnabled(true)
@@ -209,14 +208,14 @@ class ActionPage : AppCompatActivity() {
     }
 
     private fun addFab(menuOption: PageMenuOption) {
-        action_page_fab.run {
+        binding.actionPageFab.run {
             visibility = View.VISIBLE
             setOnClickListener {
                 onMenuItemClick(menuOption)
             }
 
             if (menuOption.type == "file" && menuOption.iconPath.isEmpty()) {
-                setImageDrawable(ContextCompat.getDrawable(context, R.drawable.kr_folder))
+                setImageDrawable(ContextCompat.getDrawable(context, com.omarea.krscript.R.drawable.kr_folder))
             } else if (menuOption.iconPath.isNotEmpty()) {
                 val icon = IconPathAnalysis().loadLogo(context, menuOption, false)
                 if (icon != null) {
@@ -442,7 +441,7 @@ class ActionPage : AppCompatActivity() {
                         }
 
                         val fragment = ActionListFragment.create(items, actionShortClickHandler, autoRunTask, ThemeModeState.getThemeMode())
-                        supportFragmentManager.beginTransaction().replace(R.id.main_list, fragment).commitAllowingStateLoss()
+                        supportFragmentManager.beginTransaction().replace(com.projectkr.shell.R.id.main_list, fragment).commitAllowingStateLoss()
                         hideDialog()
                         actionsLoaded = true
                     }

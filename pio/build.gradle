@@ -5,7 +5,7 @@ apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 android {
     compileSdkVersion 36
     buildToolsVersion '35.0.0'
-    namespace "com.projectkr.shell"
+    namespace 'com.projectkr.shell'
     buildFeatures{
         viewBinding true
         compose true
