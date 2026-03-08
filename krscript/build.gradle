@@ -4,7 +4,10 @@ apply plugin: 'kotlin-android'
 android {
     namespace 'com.omarea.krscript'
     compileSdkVersion 36
-
+    buildTreePath {
+        viewBinding true
+        compose true
+    }
     defaultConfig {
         minSdkVersion 21
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
