@@ -19,7 +19,8 @@ import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.widget.Toolbar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.res.stringResource
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
@@ -35,6 +36,12 @@ import com.omarea.vtools.FloatMonitor
 import com.projectkr.shell.databinding.ActivityMainBinding
 import com.projectkr.shell.permissions.CheckRootStatus
 import com.projectkr.shell.ui.TabIconHelper
+import top.yukonga.miuix.kmp.basic.NavigationItem
+import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TopAppBar
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.MapAlbum
 
 class MainActivity : ComponentActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
@@ -44,22 +51,31 @@ class MainActivity : ComponentActivity() {
 
     private fun checkPermission(permission: String): Boolean = PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeModeState.switchTheme(this)
         setContent {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = getString(R.string.app_name))
+                },
+                bottomBar = {
+                    val items = listOf(
+                        NavigationItem(
+                            label = getString(R.string.tab_home),
+                            icon = MiuixIcons.MapAlbum
+                        ),
+                        NavigationItem(label = stringResource(Res.string.tab_about), icon = Icons.Rounded.Info)
+                    )
+                }
+            ) {
 
+            }
         }
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        //supportActionBar!!.elevation = 0f
-        val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
-        setSupportActionBar(toolbar)
-        setTitle(R.string.app_name)
 
         krScriptConfig = KrScriptConfig()
-
 
         binding.mainTabhost.setup()
         val tabIconHelper = TabIconHelper(binding.mainTabhost, this)
