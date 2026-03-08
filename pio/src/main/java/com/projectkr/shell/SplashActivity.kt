@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -77,7 +78,7 @@ class SplashActivity : ComponentActivity() {
 
                     val config = KrScriptConfig().init(context)
                     if (config.beforeStartSh.isNotEmpty()) {
-                        BeforeStartThread(context, config, UpdateLogViewHandler(start_state_text) {
+                        BeforeStartThread(context, config, UpdateLogViewHandler(startStateText) {
                             gotoHome()
                         }).start()
                     } else {
@@ -220,9 +221,6 @@ class SplashActivity : ComponentActivity() {
     /**
      * 启动完成
      */
-    private fun startToFinish() {
-
-    }
 
     private fun gotoHome() {
         if (this.intent != null && this.intent.hasExtra("JumpActionPage") && this.intent.getBooleanExtra("JumpActionPage", false)) {
@@ -236,7 +234,7 @@ class SplashActivity : ComponentActivity() {
         finish()
     }
 
-    private class UpdateLogViewHandler(private var logView: TextView, private val onExit: Runnable) {
+    private class UpdateLogViewHandler(private var logView: MutableState<String>, private val onExit: Runnable) {
         private val handler = Handler(Looper.getMainLooper())
         private var notificationMessageRows = ArrayList<String>()
         private var someIgnored = false
@@ -249,7 +247,8 @@ class SplashActivity : ComponentActivity() {
                         someIgnored = true
                     }
                     notificationMessageRows.add(log)
-                    logView.setText(notificationMessageRows.joinToString("\n", if (someIgnored) "……\n" else "").trim())
+                    logView.value =
+                        notificationMessageRows.joinToString("\n", if (someIgnored) "……\n" else "").trim()
                 }
             }
         }
